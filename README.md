@@ -4,28 +4,42 @@ Your AI digital twin that lives on WhatsApp. Anton responds as you to your frien
 
 Powered by [Mem0](https://mem0.ai) for persistent memory and Claude for intelligence.
 
-## How It Works
+## Architecture
+
+> Open `architecture.excalidraw` in [Excalidraw](https://excalidraw.com) for the interactive version.
 
 ```
-Friend sends WhatsApp message to you
-        ↓
-Anton receives it (via Baileys — your actual WhatsApp account)
-        ↓
-Deep Retrieval Agent (Claude Haiku) gathers context:
-  → Fetches sender's profile from Mem0
-  → Retrieves all memories about this contact
-  → Searches for relevant memories (multi-hop)
-  → Pulls recent conversation history
-        ↓
-Response Agent (Claude Sonnet) generates reply:
-  → Uses your personality prompt
-  → Weaves in memories naturally
-  → Matches your texting style
-        ↓
-Sends response on WhatsApp as you
-        ↓
-Stores conversation in Mem0 (auto-extracts new memories)
+┌────────────┐     ┌────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────┐
+│            │     │                │     │  Deep Retrieval   │     │  Response Agent   │     │              │
+│Your Friends│────►│    Baileys     │────►│     Agent         │────►│                  │────►│  Reply Sent  │
+│on WhatsApp │     │ Your WhatsApp  │     │                  │     │  Claude Sonnet    │     │ via WhatsApp │
+│            │     │                │     │  Claude Haiku     │     │  + Personality    │     │              │
+└────────────┘     └───────┬────────┘     │  + 4 Tools        │     └────────┬─────────┘     └──────────────┘
+                           │              └────────┬─────────┘              │
+                           │                  ▲    │                        │
+                    store   │         fetch    │    │ store           live   │
+                    msgs    │        context   │    │ convo        updates  │
+                           ▼                  │    ▼                        ▼
+                   ┌────────────────┐     ┌───┴──────────────┐     ┌──────────────────┐
+                   │   SQLite DB    │     │  Mem0 Platform   │     │  Web Dashboard   │
+                   │Messages & State│     │                  │     │  localhost:3420   │
+                   └────────────────┘     │Memories · Profiles│     └──────────────────┘
+                                          │     · Search      │
+                                          └──────────────────┘
 ```
+
+## How It Works
+
+1. Friend sends you a WhatsApp message
+2. Anton receives it via Baileys (your actual WhatsApp account)
+3. **Deep Retrieval Agent** (Claude Haiku) gathers context from Mem0:
+   - Fetches sender's profile
+   - Retrieves all memories about this contact
+   - Searches for relevant memories (multi-hop)
+   - Pulls recent conversation history from SQLite
+4. **Response Agent** (Claude Sonnet) generates a reply using your personality prompt + context
+5. Reply sent on WhatsApp as you
+6. Conversation stored in Mem0 (auto-extracts new memories)
 
 ## Features
 
